@@ -6,7 +6,7 @@ import { TrendingUp, DollarSign, Calendar, Activity } from 'lucide-react'
 import { formatIndianNumber, formatIndianNumberWithCommas, formatCurrencyValue } from '@/lib/utils'
 
 export function GlobalKPICards() {
-  const { data, filters, currency } = useDashboardStore()
+  const { data, filters, currency, dashboardName } = useDashboardStore()
 
   const kpiData = useMemo(() => {
     if (!data) return null
@@ -147,13 +147,13 @@ export function GlobalKPICards() {
     const dataTypeLabel = filters.dataType === 'value' ? 'Market Size' : 'Market Volume'
 
     // Get market name from metadata, fallback to "Global Market"
-    const marketName = data.metadata.market_name || 'Global Market'
+    const marketName = data.metadata.market_name || 'U.S. Edge A.I. Market'
 
     const geographyLabel = actualSelectedGeographies.length === 0
-      ? `Global ${marketName}`
+      ? (dashboardName || marketName)
       : actualSelectedGeographies.length === 1
       ? `${actualSelectedGeographies[0]} ${marketName}`
-      : `${actualSelectedGeographies.length} Geographies ${marketName}`
+      : `${actualSelectedGeographies.length} Geographies — ${marketName}`
     const segmentTypeLabel = targetSegmentType || 'All Segments'
 
     return {
