@@ -7,7 +7,8 @@ import { FilterState } from '@/lib/types'
 import { 
   createTopMarketFilters, 
   createGrowthLeadersFilters, 
-  createEmergingMarketsFilters 
+  createEmergingMarketsFilters,
+  createFullComparisonFilters,
 } from '@/lib/preset-utils'
 
 interface FilterPreset {
@@ -31,45 +32,41 @@ export function FilterPresets() {
 
   // Dynamically compute default presets based on actual data
   const defaultPresets = useMemo<FilterPreset[]>(() => {
-    // Create dynamic filters based on data
     const topMarketFilters = createTopMarketFilters(data)
     const growthLeadersFilters = createGrowthLeadersFilters(data)
     const emergingMarketsFilters = createEmergingMarketsFilters(data)
+    const fullComparisonFilters = createFullComparisonFilters(data)
 
     return [
-  {
-    id: 'top-markets',
-    name: 'Top Markets',
-        description: 'Top 3 regions by 2023 market size',
-    icon: <Globe className="h-4 w-4" />,
-        filters: topMarketFilters
-  },
+      {
+        id: 'top-markets',
+        name: 'Top Markets',
+        description: 'Top geographies by 2023 market size',
+        icon: <Globe className="h-4 w-4" />,
+        filters: topMarketFilters,
+      },
       {
         id: 'growth-leaders',
         name: 'Growth Leaders',
-        description: 'Top 2 regions with highest CAGR',
+        description: 'Top geographies with highest CAGR',
         icon: <TrendingUp className="h-4 w-4" />,
-        filters: growthLeadersFilters
+        filters: growthLeadersFilters,
       },
       {
         id: 'emerging-markets',
         name: 'Emerging Markets',
-        description: 'Top 5 countries with highest CAGR',
+        description: 'Fastest growing geographies',
         icon: <Target className="h-4 w-4" />,
-        filters: emergingMarketsFilters
+        filters: emergingMarketsFilters,
       },
-  {
-    id: 'full-comparison',
-    name: 'Full Comparison',
-    description: 'All regions and segments matrix view',
-    icon: <BarChart3 className="h-4 w-4" />,
-    filters: {
-      viewMode: 'matrix',
-      yearRange: [2023, 2027],
-      dataType: 'value',
-    }
-  },
-]
+      {
+        id: 'full-comparison',
+        name: 'Full Comparison',
+        description: 'All geographies matrix view',
+        icon: <BarChart3 className="h-4 w-4" />,
+        filters: fullComparisonFilters,
+      },
+    ]
   }, [data])
 
   const applyPreset = (preset: FilterPreset) => {

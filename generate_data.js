@@ -1,113 +1,126 @@
 const fs = require('fs');
 const path = require('path');
 
-// Years: 2021-2033
 const years = [2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033];
+const GEOGRAPHY = 'U.S.';
 
-// Geographies with their region grouping
-const regions = {
-  "North America": ["U.S.", "Canada"],
-  "Europe": ["U.K.", "Germany", "Italy", "France", "Spain", "Russia", "Rest of Europe"],
-  "Asia Pacific": ["China", "India", "Japan", "South Korea", "ASEAN", "Australia", "Rest of Asia Pacific"],
-  "Latin America": ["Brazil", "Argentina", "Mexico", "Rest of Latin America"],
-  "Middle East & Africa": ["GCC", "South Africa", "Rest of Middle East & Africa"]
-};
+// US Edge AI market base value (USD Million) for 2021
+const US_BASE_VALUE_2021 = 6200;
+const US_BASE_CAGR = 0.182;
 
-// New segment definitions with market share splits (proportions within each segment type)
-const segmentTypes = {
-  "By Type": {
-    "Sub-Normothermic Perfusion (20–34°C)": 0.55,
-    "Warm or Normothermic Perfusion (35–37°C)": 0.45
+// Hierarchical: By Component (Segment > Sub-segment > Sub-sub-segment)
+const byComponentHierarchy = {
+  Hardware: {
+    'Edge AI Processors': {
+      CPUs: 0.055,
+      GPUs: 0.066,
+      'NPUs / AI Accelerators': 0.055,
+      FPGAs: 0.022,
+      ASICs: 0.022,
+    },
+    'Edge Infrastructure Hardware': {
+      'Edge AI Servers': 0.086,
+      'Edge Gateways': 0.058,
+      'Embedded Edge Modules': 0.048,
+    },
+    'Edge Endpoint Devices': {
+      'AI-enabled Sensors': 0.038,
+      'Smart Cameras': 0.044,
+      'Robotics Controllers': 0.028,
+    },
   },
-  "By Organ Type": {
-    "Liver": 0.35,
-    "Heart": 0.22,
-    "Lung": 0.18,
-    "Kidney": 0.15,
-    "Others (Pancreas, Small bowel / Intestine, Composite Tissues / Limb Perfusion (emerging use cases))": 0.10
+  Software: {
+    'Edge AI Platforms': 0.09,
+    'AI Training & Inference Software': 0.075,
+    'Edge Analytics Software': 0.06,
+    'AI Middleware & Runtime Software': 0.045,
+    'Security & Privacy Software': 0.03,
   },
-  "Application / Use Case": {
-    "Organ Preservation": 0.30,
-    "Viability Assessment": 0.25,
-    "Physiologic Transport": 0.20,
-    "Reconditioning Marginal Organs": 0.15,
-    "Others (Research Use / Protocol development)": 0.10
+  Services: {
+    'Professional Services': 0.09,
+    'Managed Services': 0.06,
   },
-  "By End User": {
-    "Hospitals & Clinics": 0.40,
-    "Specialty Clinic/Centers": 0.25,
-    "Transplant Centers": 0.25,
-    "Others (Research Institutes/Centers, Organ Procurement Organizations, etc.)": 0.10
-  }
 };
 
-// Regional base values (USD Million) for 2021 - total market per region
-// Global Normothermic Machine Perfusion market ~$300M in 2021, growing ~12% CAGR
-const regionBaseValues = {
-  "North America": 120,
-  "Europe": 90,
-  "Asia Pacific": 50,
-  "Latin America": 20,
-  "Middle East & Africa": 15
+// Flat segment types (segment name -> share of total market)
+const flatSegmentTypes = {
+  'By Processing Architecture': {
+    'On-device Edge AI': 0.52,
+    'Distributed Edge AI': 0.33,
+    'Federated Edge AI': 0.15,
+  },
+  'By Data Type': {
+    'Visual Data (Video & Image Data)': 0.42,
+    'Sensor & Telemetry Data': 0.38,
+    'Multimodal Data': 0.20,
+  },
+  'By Connectivity': {
+    'Cellular Connectivity (5G/4G)': 0.35,
+    'Wi-Fi Connectivity': 0.30,
+    'LPWAN Connectivity': 0.20,
+    'Satellite Connectivity': 0.15,
+  },
+  'By Industry Vertical': {
+    Manufacturing: 0.24,
+    'Energy & Utilities': 0.18,
+    'Aerospace & Defense': 0.14,
+    Agriculture: 0.08,
+    'Logistics & Transportation': 0.16,
+    'Government & Public Sector': 0.12,
+    'Others (Marine & Environmental Monitoring, etc.)': 0.08,
+  },
 };
 
-// Country share within region (must sum to ~1.0)
-const countryShares = {
-  "North America": { "U.S.": 0.82, "Canada": 0.18 },
-  "Europe": { "U.K.": 0.18, "Germany": 0.22, "Italy": 0.12, "France": 0.16, "Spain": 0.10, "Russia": 0.08, "Rest of Europe": 0.14 },
-  "Asia Pacific": { "China": 0.28, "India": 0.12, "Japan": 0.25, "South Korea": 0.12, "ASEAN": 0.10, "Australia": 0.07, "Rest of Asia Pacific": 0.06 },
-  "Latin America": { "Brazil": 0.45, "Argentina": 0.15, "Mexico": 0.25, "Rest of Latin America": 0.15 },
-  "Middle East & Africa": { "GCC": 0.45, "South Africa": 0.25, "Rest of Middle East & Africa": 0.30 }
-};
-
-// Growth rates (CAGR) per region - slightly different for variety
-const regionGrowthRates = {
-  "North America": 0.115,
-  "Europe": 0.108,
-  "Asia Pacific": 0.145,
-  "Latin America": 0.125,
-  "Middle East & Africa": 0.118
-};
-
-// Segment-specific growth multipliers (relative to regional base CAGR)
 const segmentGrowthMultipliers = {
-  "By Type": {
-    "Sub-Normothermic Perfusion (20–34°C)": 0.95,
-    "Warm or Normothermic Perfusion (35–37°C)": 1.07
-  },
-  "By Organ Type": {
-    "Liver": 1.08,
-    "Heart": 1.05,
-    "Lung": 1.12,
-    "Kidney": 0.95,
-    "Others (Pancreas, Small bowel / Intestine, Composite Tissues / Limb Perfusion (emerging use cases))": 1.20
-  },
-  "Application / Use Case": {
-    "Organ Preservation": 0.92,
-    "Viability Assessment": 1.15,
-    "Physiologic Transport": 1.05,
-    "Reconditioning Marginal Organs": 1.18,
-    "Others (Research Use / Protocol development)": 1.10
-  },
-  "By End User": {
-    "Hospitals & Clinics": 0.98,
-    "Specialty Clinic/Centers": 1.10,
-    "Transplant Centers": 1.08,
-    "Others (Research Institutes/Centers, Organ Procurement Organizations, etc.)": 1.05
-  }
+  Hardware: 1.05,
+  Software: 1.12,
+  Services: 1.08,
+  CPUs: 0.95,
+  GPUs: 1.15,
+  'NPUs / AI Accelerators': 1.18,
+  FPGAs: 1.02,
+  ASICs: 1.10,
+  'Edge AI Servers': 1.08,
+  'Edge Gateways': 1.06,
+  'Embedded Edge Modules': 1.04,
+  'AI-enabled Sensors': 1.12,
+  'Smart Cameras': 1.14,
+  'Robotics Controllers': 1.16,
+  'Edge AI Platforms': 1.14,
+  'AI Training & Inference Software': 1.10,
+  'AI Middleware & Runtime Software': 1.12,
+  'Edge Analytics Software': 1.08,
+  'Security & Privacy Software': 1.15,
+  'Professional Services': 1.06,
+  'Managed Services': 1.10,
+  'On-device Edge AI': 1.08,
+  'Distributed Edge AI': 1.12,
+  'Federated Edge AI': 1.18,
+  'Visual Data (Video & Image Data)': 1.10,
+  'Sensor & Telemetry Data': 1.06,
+  'Multimodal Data': 1.16,
+  'Cellular Connectivity (5G/4G)': 1.14,
+  'Wi-Fi Connectivity': 1.05,
+  'LPWAN Connectivity': 1.10,
+  'Satellite Connectivity': 1.12,
+  Manufacturing: 1.10,
+  'Energy & Utilities': 1.08,
+  'Aerospace & Defense': 1.06,
+  Agriculture: 1.14,
+  'Logistics & Transportation': 1.12,
+  'Government & Public Sector': 1.04,
+  'Others (Marine & Environmental Monitoring, etc.)': 1.16,
 };
 
-// Volume multiplier: units per USD Million (rough: ~500 units per $1M for perfusion devices)
-const volumePerMillionUSD = 480;
+const volumePerMillionUSD = 1250;
 
-// Seeded pseudo-random for reproducibility
 let seed = 42;
 function seededRandom() {
   seed = (seed * 16807 + 0) % 2147483647;
   return (seed - 1) / 2147483646;
 }
 
-function addNoise(value, noiseLevel = 0.03) {
+function addNoise(value, noiseLevel = 0.025) {
   return value * (1 + (seededRandom() - 0.5) * 2 * noiseLevel);
 }
 
@@ -119,85 +132,140 @@ function roundToInt(val) {
   return Math.round(val);
 }
 
+function getGrowthMultiplier(name) {
+  return segmentGrowthMultipliers[name] || 1.0;
+}
+
 function generateTimeSeries(baseValue, growthRate, roundFn) {
   const series = {};
   for (let i = 0; i < years.length; i++) {
     const year = years[i];
-    const rawValue = baseValue * Math.pow(1 + growthRate, i);
-    series[year] = roundFn(addNoise(rawValue));
+    series[year] = roundFn(addNoise(baseValue * Math.pow(1 + growthRate, i)));
   }
   return series;
 }
 
-function generateData(isVolume) {
-  const data = {};
+function sumTimeSeries(seriesList) {
+  const total = {};
+  for (const year of years) {
+    total[year] = roundTo1(seriesList.reduce((sum, s) => sum + (s[year] || 0), 0));
+  }
+  return total;
+}
+
+function buildHierarchicalNode(node, baseMarket, parentGrowth, isVolume) {
   const roundFn = isVolume ? roundToInt : roundTo1;
   const multiplier = isVolume ? volumePerMillionUSD : 1;
+  const result = {};
 
-  // Generate data for each region and country
-  for (const [regionName, countries] of Object.entries(regions)) {
-    const regionBase = regionBaseValues[regionName] * multiplier;
-    const regionGrowth = regionGrowthRates[regionName];
+  const entries = Object.entries(node);
+  const childSeriesList = [];
 
-    // Region-level data
-    data[regionName] = {};
-    for (const [segType, segments] of Object.entries(segmentTypes)) {
-      data[regionName][segType] = {};
-      for (const [segName, share] of Object.entries(segments)) {
-        const segGrowth = regionGrowth * segmentGrowthMultipliers[segType][segName];
-        const segBase = regionBase * share;
-        data[regionName][segType][segName] = generateTimeSeries(segBase, segGrowth, roundFn);
-      }
-    }
-
-    // Add "By Country" for each region
-    data[regionName]["By Country"] = {};
-    for (const country of countries) {
-      const cShare = countryShares[regionName][country];
-      // Use a slight variation of region growth per country
-      const countryGrowthVariation = 1 + (seededRandom() - 0.5) * 0.06;
-      const countryBase = regionBase * cShare;
-      const countryGrowth = regionGrowth * countryGrowthVariation;
-      data[regionName]["By Country"][country] = generateTimeSeries(countryBase, countryGrowth, roundFn);
-    }
-
-    // Country-level data
-    for (const country of countries) {
-      const cShare = countryShares[regionName][country];
-      const countryBase = regionBase * cShare;
-      const countryGrowthVariation = 1 + (seededRandom() - 0.5) * 0.04;
-      const countryGrowth = regionGrowth * countryGrowthVariation;
-
-      data[country] = {};
-      for (const [segType, segments] of Object.entries(segmentTypes)) {
-        data[country][segType] = {};
-        for (const [segName, share] of Object.entries(segments)) {
-          const segGrowth = countryGrowth * segmentGrowthMultipliers[segType][segName];
-          const segBase = countryBase * share;
-          // Add slight country-specific variation to segment share
-          const shareVariation = 1 + (seededRandom() - 0.5) * 0.1;
-          data[country][segType][segName] = generateTimeSeries(segBase * shareVariation, segGrowth, roundFn);
+  for (const [key, value] of entries) {
+    if (typeof value === 'object' && value !== null) {
+      const childNode = buildHierarchicalNode(value, baseMarket, parentGrowth * getGrowthMultiplier(key), isVolume);
+      result[key] = childNode;
+      if (childNode._leafSeries) {
+        childSeriesList.push(childNode._leafSeries);
+        delete childNode._leafSeries;
+      } else {
+        const childYearKeys = Object.keys(childNode).filter((k) => /^\d{4}$/.test(k));
+        if (childYearKeys.length > 0) {
+          childSeriesList.push(
+            Object.fromEntries(childYearKeys.map((y) => [y, childNode[y]]))
+          );
         }
       }
+    } else {
+      const segGrowth = parentGrowth * getGrowthMultiplier(key);
+      const segBase = baseMarket * multiplier * value;
+      const series = generateTimeSeries(segBase, segGrowth, roundFn);
+      result[key] = series;
+      childSeriesList.push(series);
     }
+  }
+
+  if (childSeriesList.length > 0) {
+    const parentTotals = sumTimeSeries(childSeriesList);
+    if (isVolume) {
+      for (const year of years) {
+        parentTotals[year] = roundToInt(parentTotals[year]);
+      }
+    }
+    Object.assign(result, parentTotals);
+  }
+
+  return result;
+}
+
+function buildFlatSegmentType(segments, baseMarket, isVolume) {
+  const roundFn = isVolume ? roundToInt : roundTo1;
+  const multiplier = isVolume ? volumePerMillionUSD : 1;
+  const result = {};
+
+  for (const [segName, share] of Object.entries(segments)) {
+    const segGrowth = US_BASE_CAGR * getGrowthMultiplier(segName);
+    const segBase = baseMarket * multiplier * share;
+    result[segName] = generateTimeSeries(segBase, segGrowth, roundFn);
+  }
+
+  return result;
+}
+
+function generateGeographyData(isVolume) {
+  const data = { [GEOGRAPHY]: {} };
+
+  data[GEOGRAPHY]['By Component'] = buildHierarchicalNode(
+    byComponentHierarchy,
+    US_BASE_VALUE_2021,
+    US_BASE_CAGR,
+    isVolume
+  );
+
+  for (const [segType, segments] of Object.entries(flatSegmentTypes)) {
+    data[GEOGRAPHY][segType] = buildFlatSegmentType(segments, US_BASE_VALUE_2021, isVolume);
   }
 
   return data;
 }
 
-// Generate both datasets
-seed = 42;
-const valueData = generateData(false);
-seed = 7777;
-const volumeData = generateData(true);
+function buildSegmentationAnalysisStructure(node) {
+  if (typeof node !== 'object' || node === null) return {};
+  const result = {};
+  for (const [key, value] of Object.entries(node)) {
+    result[key] = typeof value === 'object' && !Array.isArray(value)
+      ? buildSegmentationAnalysisStructure(value)
+      : {};
+  }
+  return result;
+}
 
-// Write files
+function buildSegmentationAnalysis() {
+  return {
+    [GEOGRAPHY]: {
+      'By Component': buildSegmentationAnalysisStructure(byComponentHierarchy),
+      ...Object.fromEntries(
+        Object.keys(flatSegmentTypes).map((segType) => [
+          segType,
+          Object.fromEntries(Object.keys(flatSegmentTypes[segType]).map((s) => [s, {}])),
+        ])
+      ),
+    },
+  };
+}
+
+seed = 42;
+const valueData = generateGeographyData(false);
+seed = 7777;
+const volumeData = generateGeographyData(true);
+const segmentationAnalysis = buildSegmentationAnalysis();
+
 const outDir = path.join(__dirname, 'public', 'data');
 fs.writeFileSync(path.join(outDir, 'value.json'), JSON.stringify(valueData, null, 2));
 fs.writeFileSync(path.join(outDir, 'volume.json'), JSON.stringify(volumeData, null, 2));
+fs.writeFileSync(path.join(outDir, 'segmentation_analysis.json'), JSON.stringify(segmentationAnalysis, null, 2));
 
-console.log('Generated value.json and volume.json successfully');
-console.log('Value geographies:', Object.keys(valueData).length);
-console.log('Volume geographies:', Object.keys(volumeData).length);
-console.log('Segment types:', Object.keys(valueData['North America']));
-console.log('Sample - North America, By Type:', JSON.stringify(valueData['North America']['By Type'], null, 2));
+console.log('Generated Edge AI market data (U.S. only)');
+console.log('Geographies:', Object.keys(valueData));
+console.log('Segment types:', Object.keys(valueData[GEOGRAPHY]));
+console.log('By Component top-level keys:', Object.keys(valueData[GEOGRAPHY]['By Component']));

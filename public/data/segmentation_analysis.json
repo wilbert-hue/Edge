@@ -1,63 +1,61 @@
 {
-  "Global": {
-    "By Type": {
-      "Sub-Normothermic Perfusion (20–34°C)": {},
-      "Warm or Normothermic Perfusion (35–37°C)": {}
-    },
-    "By Organ Type": {
-      "Liver": {},
-      "Heart": {},
-      "Lung": {},
-      "Kidney": {},
-      "Others (Pancreas, Small bowel / Intestine, Composite Tissues / Limb Perfusion (emerging use cases))": {}
-    },
-    "Application / Use Case": {
-      "Organ Preservation": {},
-      "Viability Assessment": {},
-      "Physiologic Transport": {},
-      "Reconditioning Marginal Organs": {},
-      "Others (Research Use / Protocol development)": {}
-    },
-    "By End User": {
-      "Hospitals & Clinics": {},
-      "Specialty Clinic/Centers": {},
-      "Transplant Centers": {},
-      "Others (Research Institutes/Centers, Organ Procurement Organizations, etc.)": {}
-    },
-    "By Region": {
-      "North America": {
-        "U.S.": {},
-        "Canada": {}
+  "U.S.": {
+    "By Component": {
+      "Hardware": {
+        "Edge AI Processors": {
+          "CPUs": {},
+          "GPUs": {},
+          "NPUs / AI Accelerators": {},
+          "FPGAs": {},
+          "ASICs": {}
+        },
+        "Edge Infrastructure Hardware": {
+          "Edge AI Servers": {},
+          "Edge Gateways": {},
+          "Embedded Edge Modules": {}
+        },
+        "Edge Endpoint Devices": {
+          "AI-enabled Sensors": {},
+          "Smart Cameras": {},
+          "Robotics Controllers": {}
+        }
       },
-      "Europe": {
-        "U.K.": {},
-        "Germany": {},
-        "Italy": {},
-        "France": {},
-        "Spain": {},
-        "Russia": {},
-        "Rest of Europe": {}
+      "Software": {
+        "Edge AI Platforms": {},
+        "AI Training & Inference Software": {},
+        "Edge Analytics Software": {},
+        "AI Middleware & Runtime Software": {},
+        "Security & Privacy Software": {}
       },
-      "Asia Pacific": {
-        "China": {},
-        "India": {},
-        "Japan": {},
-        "South Korea": {},
-        "ASEAN": {},
-        "Australia": {},
-        "Rest of Asia Pacific": {}
-      },
-      "Latin America": {
-        "Brazil": {},
-        "Argentina": {},
-        "Mexico": {},
-        "Rest of Latin America": {}
-      },
-      "Middle East & Africa": {
-        "GCC": {},
-        "South Africa": {},
-        "Rest of Middle East & Africa": {}
+      "Services": {
+        "Professional Services": {},
+        "Managed Services": {}
       }
+    },
+    "By Processing Architecture": {
+      "On-device Edge AI": {},
+      "Distributed Edge AI": {},
+      "Federated Edge AI": {}
+    },
+    "By Data Type": {
+      "Visual Data (Video & Image Data)": {},
+      "Sensor & Telemetry Data": {},
+      "Multimodal Data": {}
+    },
+    "By Connectivity": {
+      "Cellular Connectivity (5G/4G)": {},
+      "Wi-Fi Connectivity": {},
+      "LPWAN Connectivity": {},
+      "Satellite Connectivity": {}
+    },
+    "By Industry Vertical": {
+      "Manufacturing": {},
+      "Energy & Utilities": {},
+      "Aerospace & Defense": {},
+      "Agriculture": {},
+      "Logistics & Transportation": {},
+      "Government & Public Sector": {},
+      "Others (Marine & Environmental Monitoring, etc.)": {}
     }
   }
 }

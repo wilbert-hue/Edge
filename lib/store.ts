@@ -83,28 +83,41 @@ function getDefaultFilters(data: ComparisonData | null): FilterState {
   }
   }
 
-  const firstSegmentType = Object.keys(data.dimensions.segments)[0] || ''
+  const segmentTypes = Object.keys(data.dimensions.segments)
+  const preferredSegmentType = segmentTypes.includes('By Component')
+    ? 'By Component'
+    : segmentTypes[0] || ''
   const startYear = data.metadata.start_year
   const baseYear = data.metadata.base_year
   const forecastYear = data.metadata.forecast_year
   
-  // Get first geography for default view
-  const firstGeography = data.dimensions.geographies.all_geographies?.[0] || ''
+  // Prefer U.S. when available, otherwise first geography
+  const allGeographies = data.dimensions.geographies.all_geographies || []
+  const defaultGeography = allGeographies.includes('U.S.')
+    ? 'U.S.'
+    : allGeographies[0] || ''
   
-  // Get first few segments from the first segment type (for default view)
-  const segmentDimension = data.dimensions.segments[firstSegmentType]
-  const firstSegments = segmentDimension?.items?.slice(0, 3) || []
+  // Default to top-level component segments (Hardware, Software, Services)
+  const segmentDimension = data.dimensions.segments[preferredSegmentType]
+  const hierarchy = segmentDimension?.hierarchy || {}
+  const allChildren = new Set(Object.values(hierarchy).flat())
+  const hierarchyRoots = Object.keys(hierarchy).filter(
+    (parent) => hierarchy[parent]?.length > 0 && !allChildren.has(parent)
+  )
+  const firstSegments = hierarchyRoots.length > 0
+    ? hierarchyRoots.slice(0, 3)
+    : segmentDimension?.items?.slice(0, 3) || []
   
   // Set default business type only if B2B/B2C exists
   let defaultBusinessType: 'B2B' | 'B2C' | undefined = undefined
-  if (hasB2BSegmentation(data, firstSegmentType)) {
+  if (hasB2BSegmentation(data, preferredSegmentType)) {
     defaultBusinessType = 'B2B'
   }
 
   return {
-    geographies: firstGeography ? [firstGeography] : [],
+    geographies: defaultGeography ? [defaultGeography] : [],
     segments: firstSegments,
-    segmentType: firstSegmentType,
+    segmentType: preferredSegmentType,
     yearRange: [baseYear, Math.min(baseYear + 4, forecastYear)],
     dataType: 'value',
     viewMode: 'segment-mode',
@@ -131,12 +144,17 @@ function getDefaultOpportunityFilters(data: ComparisonData | null): FilterState 
     }
   }
 
-  const firstSegmentType = Object.keys(data.dimensions.segments)[0] || ''
+  const segmentTypes = Object.keys(data.dimensions.segments)
+  const preferredSegmentType = segmentTypes.includes('By Component')
+    ? 'By Component'
+    : segmentTypes[0] || ''
   const baseYear = data.metadata.base_year
   const forecastYear = data.metadata.forecast_year
   
-  // For opportunity matrix, default to first geography (usually India or global)
-  const firstGeography = data.dimensions.geographies.all_geographies?.[0] || ''
+  const allGeographies = data.dimensions.geographies.all_geographies || []
+  const defaultGeography = allGeographies.includes('U.S.')
+    ? 'U.S.'
+    : allGeographies[0] || ''
   
   // For opportunity matrix, don't pre-select segments - let user select them
   // This avoids issues where segments don't match the actual data structure
@@ -145,14 +163,14 @@ function getDefaultOpportunityFilters(data: ComparisonData | null): FilterState 
   
   // Set default business type only if B2B/B2C exists
   let defaultBusinessType: 'B2B' | 'B2C' | undefined = undefined
-  if (hasB2BSegmentation(data, firstSegmentType)) {
+  if (hasB2BSegmentation(data, preferredSegmentType)) {
     defaultBusinessType = 'B2B'
   }
 
   return {
-    geographies: firstGeography ? [firstGeography] : [],
+    geographies: defaultGeography ? [defaultGeography] : [],
     segments: segments, // Empty = show all segments (don't pre-filter)
-    segmentType: firstSegmentType,
+    segmentType: preferredSegmentType,
     yearRange: [baseYear, forecastYear], // Full forecast range for CAGR calculation
     dataType: 'value',
     viewMode: 'segment-mode',
