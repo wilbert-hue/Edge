@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { useDashboardStore } from '@/lib/store'
-import { TrendingUp, DollarSign, Calendar, Activity } from 'lucide-react'
+import { TrendingUp, DollarSign, Calendar, Activity, Info } from 'lucide-react'
 import { formatIndianNumber, formatIndianNumberWithCommas, formatCurrencyValue } from '@/lib/utils'
 
 export function GlobalKPICards() {
@@ -273,6 +273,16 @@ export function GlobalKPICards() {
               </p>
             </div>
           </div>
+        </div>
+
+        <div
+          className="mt-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2"
+          role="alert"
+        >
+          <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+          <p className="text-xs text-amber-900">
+            <span className="font-semibold">NOTE:</span> All the data in the dashboard is demo data. No real-world data is related to this.
+          </p>
         </div>
       </div>
     </div>
